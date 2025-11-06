@@ -3,38 +3,35 @@
 import { useState } from "react";
 import { TelegramProvider } from "@/shared/providers/TelegramProvider";
 import styles from "./MessageForm.module.scss";
+import { Button } from "@/shared/ui";
 
 export function MessageForm() {
     const [text, setText] = useState("");
 
     const sendMessage = async () => {
-        if (!text.trim()) return alert("Введите сообщение");
+        if (!text.trim()) return;
 
         try {
-            const res = await fetch("/entities/message/api/sendMessage.api", {
+            await fetch("/entities/message/api/sendMessage.api", {
                 method: "POST",
                 body: JSON.stringify({ text }),
             });
 
-            if (!res.ok) throw new Error("Failed");
-
-            alert("Сообщение отправлено!");
             setText("");
 
-            // безопасно закрываем Mini App, проверяя существование WebApp
+            // безопасно закрываем Mini App
             const tg = window.Telegram?.WebApp;
-            if (tg && typeof tg.close === "function") {
-                tg.close();
-            }
-        } catch {
-            alert("Ошибка при отправке");
+            if (tg?.close) tg.close();
+        } catch (err) {
+            console.error("Ошибка при отправке:", err);
         }
     };
 
     return (
         <TelegramProvider>
-            <main className={styles.main}>
+            <div className={styles.messageForm}>
                 <h1 className={styles.title}>Задайте вопрос</h1>
+
                 <textarea
                     className={styles.textarea}
                     value={text}
@@ -42,10 +39,11 @@ export function MessageForm() {
                     placeholder="Введите сообщение..."
                     rows={4}
                 />
-                <button className={styles.button} onClick={sendMessage}>
+
+                <Button className={styles.button} onClick={sendMessage}>
                     Отправить
-                </button>
-            </main>
+                </Button>
+            </div>
         </TelegramProvider>
     );
 }

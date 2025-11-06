@@ -37,7 +37,7 @@
 }
 
 .buttonPrimary {
-    background: radial-gradient(108.41% 134.4% at 0% 0%, #ca44ff 0%, #b554dc 57.21%, #6a0094 100%);
+    background: linear-gradient(45deg, $color-red, #000);
 }
 
 .buttonSwitch {

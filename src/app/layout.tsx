@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Lato } from 'next/font/google';
 import clsx from 'clsx';
 import styles from './layout.module.scss';
+import '@/shared/styles/global.scss';
 
 // Подключаем шрифт Lato
 const latoSans = Lato({

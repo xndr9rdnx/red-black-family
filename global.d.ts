@@ -10,3 +10,6 @@ interface Window {
         WebApp: TelegramWebApp;
     };
 }
+
+declare module '*.scss';
+declare module '*.css';
