@@ -1,6 +1,8 @@
+'use client'
+
 import { useState } from "react";
-import styles from "../../../styles/MessageForm.module.scss";
 import { TelegramProvider } from "@/shared/providers/TelegramProvider";
+import styles from "./MessageForm.module.scss";
 
 export function MessageForm() {
     const [text, setText] = useState("");

@@ -14,10 +14,10 @@ const latoSans = Lato({
 
 export const metadata: Metadata = {
     title: {
-        default: 'Торты Ваганян',
+        default: 'Red Black Family',
         template: '%s | RoboMine Сapital',
     },
-    description: ',
+    description: 'Сообщество по игре в мафию',
     // metadataBase: new URL(FRONTEND_URL || 'Ошибка переменной URL'),
 };
 
