@@ -12,7 +12,7 @@ export function MessageForm() {
         if (!text.trim()) return;
 
         try {
-            await fetch("/features/message-form/api/sendMessage.api", {
+            await fetch("/api/sendMessage", {
                 method: "POST",
                 body: JSON.stringify({ text }),
             });
@@ -39,6 +39,7 @@ export function MessageForm() {
                 <Button className={styles.button} onClick={sendMessage}>
                     Отправить
                 </Button>
+                версия 1
             </div>
         </TelegramProvider>
     );
