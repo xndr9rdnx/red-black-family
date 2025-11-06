@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui";
 
 export function MessageForm() {
     const [text, setText] = useState("");
+    const [isSent, setIsSent] = useState(false);
 
     const sendMessage = async () => {
         if (!text.trim()) return;
@@ -17,11 +18,29 @@ export function MessageForm() {
                 body: JSON.stringify({ text }),
             });
 
+            setIsSent(true);
             setText("");
         } catch (err) {
             console.error("Ошибка при отправке:", err);
         }
     };
+
+    const closeMessage = () => {
+        setIsSent(false);
+    };
+
+    if (isSent) {
+        return (
+            <div className={styles.fullscreenMessage}>
+                <div className={styles.messageBox}>
+                    <h1>✅ Ваш вопрос отправлен!</h1>
+                    <button onClick={closeMessage} className={styles.closeButton}>
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <TelegramProvider>

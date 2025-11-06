@@ -6,7 +6,9 @@
     position: relative;
     justify-items: center;
     z-index: 0;
-    padding: 32px 0;
+    display: grid;
+    justify-content: center;
+    align-content: center;
 
     .content {
         position: relative;
