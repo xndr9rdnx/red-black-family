@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Empty message" }, { status: 400 });
     }
 
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const token = '7900512023:AAFBSzEOq0l-K63XTEXUVP0UUDewJCT0iZQ';
+    const chatId = '-1003289488234';
 
     try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
