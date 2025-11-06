@@ -36,10 +36,9 @@ export function MessageForm() {
                     rows={4}
                 />
 
-                <Button className={styles.button} onClick={sendMessage}>
+                <button className={styles.button} onClick={sendMessage}>
                     Отправить
-                </Button>
-                версия 1
+                </button>
             </div>
         </TelegramProvider>
     );

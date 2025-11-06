@@ -1,9 +1,58 @@
+// MessageForm.module.scss
 .messageForm {
-    display: grid;
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: 'Lato', sans-serif;
+}
 
-    .title {}
+.title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #111;
+    text-align: center;
+}
 
-    .textarea {
-        resize: vertical;
+.textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    resize: none;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+
+    &:focus {
+        outline: none;
+        border-color: #4f46e5; // современный фиолетовый акцент
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+}
+
+.button {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+    color: #fff;
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
     }
 }

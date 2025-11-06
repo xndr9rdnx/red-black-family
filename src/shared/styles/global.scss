@@ -120,6 +120,16 @@ select {
     font-family: inherit;
 }
 
+textarea {
+    outline: none;
+    border: none;
+
+    &:focus {
+        outline: none;
+        box-shadow: none;
+    }
+}
+
 input::-ms-clear {
     display: none;
 }
