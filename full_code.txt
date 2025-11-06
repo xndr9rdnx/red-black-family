@@ -25,14 +25,20 @@ export async function POST(req: NextRequest) {
     const token = '7900512023:AAFBSzEOq0l-K63XTEXUVP0UUDewJCT0iZQ';
     const chatId = '-1003289488234';
 
+    // Формируем уникальный ID сообщения (можно заменить на автоинкремент из БД)
+    const messageId = Date.now();
+
+    // Формируем текст с юзернеймом и номером
+    const messageText = `#${messageId}\nПользователь: ${user.username || user.first_name || 'Anonymous'}\nВопрос: ${text}`;
+
     try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text }),
+            body: JSON.stringify({ chat_id: chatId, text: messageText }),
         });
 
-        return NextResponse.json({ ok: true });
+        return NextResponse.json({ ok: true, messageId });
     } catch (err) {
         console.error(err);
         return NextResponse.json({ error: "Failed to send" }, { status: 500 });
@@ -147,35 +153,6 @@ export default function HomePage() {
 }
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\features\message-form\api\sendMessage.api.ts =====
-
-// import type { NextRequest } from "next/server";
-
-// export const POST = async (req: NextRequest) => {
-//     const { text } = await req.json();
-
-//     if (!text?.trim()) {
-//         return new Response(JSON.stringify({ error: "Empty message" }), { status: 400 });
-//     }
-
-//     const token = process.env.TELEGRAM_BOT_TOKEN;
-//     const chatId = process.env.TELEGRAM_CHAT_ID;
-
-//     try {
-//         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-//             method: "POST",
-//             headers: { "Content-Type": "application/json" },
-//             body: JSON.stringify({ chat_id: chatId, text }),
-//         });
-
-//         return new Response(JSON.stringify({ ok: true }), { status: 200 });
-//     } catch (err) {
-//         console.error(err);
-//         return new Response(JSON.stringify({ error: "Failed to send" }), { status: 500 });
-//     }
-// };
-
-
 ===== C:\Users\alexa\Documents\projects\red-black-family\src\features\message-form\ui\MessageForm.tsx =====
 
 'use client'
@@ -187,21 +164,42 @@ import { Button } from "@/shared/ui";
 
 export function MessageForm() {
     const [text, setText] = useState("");
+    const [isSent, setIsSent] = useState(false);
 
     const sendMessage = async () => {
         if (!text.trim()) return;
 
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe.user || {};
+
         try {
             await fetch("/api/sendMessage", {
                 method: "POST",
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, user: tgUser }),
             });
 
+            setIsSent(true);
             setText("");
         } catch (err) {
             console.error("Ошибка при отправке:", err);
         }
     };
+
+    const closeMessage = () => {
+        setIsSent(false);
+    };
+
+    if (isSent) {
+        return (
+            <div className={styles.fullscreenMessage}>
+                <div className={styles.messageBox}>
+                    <h1>✅ Ваш вопрос отправлен!</h1>
+                    <button onClick={closeMessage} className={styles.closeButton}>
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <TelegramProvider>
@@ -216,10 +214,9 @@ export function MessageForm() {
                     rows={4}
                 />
 
-                <Button className={styles.button} onClick={sendMessage}>
+                <button className={styles.button} onClick={sendMessage}>
                     Отправить
-                </Button>
-                версия 1
+                </button>
             </div>
         </TelegramProvider>
     );
@@ -632,8 +629,6 @@ export default function Header() {
     ├── entities
     ├── features
     │   └── message-form
-    │   │   ├── api
-    │   │       └── sendMessage.api.ts
     │   │   └── ui
     │   │       ├── MessageForm.module.scss
     │   │       └── MessageForm.tsx

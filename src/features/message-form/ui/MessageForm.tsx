@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
 import { useState } from "react";
-import { TelegramProvider } from "@/shared/providers/TelegramProvider";
+import { useTelegram } from "@/shared/providers/TelegramProvider";
 import styles from "./MessageForm.module.scss";
-import { Button } from "@/shared/ui";
 
 export function MessageForm() {
     const [text, setText] = useState("");
     const [isSent, setIsSent] = useState(false);
+    const { user } = useTelegram();
 
     const sendMessage = async () => {
         if (!text.trim()) return;
@@ -15,7 +15,8 @@ export function MessageForm() {
         try {
             await fetch("/api/sendMessage", {
                 method: "POST",
-                body: JSON.stringify({ text }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, user }),
             });
 
             setIsSent(true);
@@ -25,9 +26,7 @@ export function MessageForm() {
         }
     };
 
-    const closeMessage = () => {
-        setIsSent(false);
-    };
+    const closeMessage = () => setIsSent(false);
 
     if (isSent) {
         return (
@@ -43,22 +42,20 @@ export function MessageForm() {
     }
 
     return (
-        <TelegramProvider>
-            <div className={styles.messageForm}>
-                <h1 className={styles.title}>Задайте вопрос</h1>
+        <div className={styles.messageForm}>
+            <h1 className={styles.title}>Задайте вопрос</h1>
 
-                <textarea
-                    className={styles.textarea}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Введите сообщение..."
-                    rows={4}
-                />
+            <textarea
+                className={styles.textarea}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Введите сообщение..."
+                rows={4}
+            />
 
-                <button className={styles.button} onClick={sendMessage}>
-                    Отправить
-                </button>
-            </div>
-        </TelegramProvider>
+            <button className={styles.button} onClick={sendMessage}>
+                Отправить
+            </button>
+        </div>
     );
 }
