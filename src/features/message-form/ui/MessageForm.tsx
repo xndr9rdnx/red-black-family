@@ -18,6 +18,12 @@ export function MessageForm() {
     const contentRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    // Загружаем текст из localStorage при монтировании
+    useEffect(() => {
+        const saved = localStorage.getItem("messageText");
+        if (saved) setText(saved);
+    }, []);
+
     const startDrag = (x: number, y: number) => {
         setIsDragging(true);
         setDragStart({ x: x - position.x, y: y - position.y });
@@ -123,10 +129,15 @@ export function MessageForm() {
                             value={text}
                             ref={textareaRef}
                             onChange={(e) => {
-                                setText(e.target.value);
+                                const value = e.target.value;
+                                setText(value);
+
+                                // сохраняем в localStorage
+                                localStorage.setItem("messageText", value);
+
                                 const ta = textareaRef.current;
                                 if (ta) {
-                                    ta.style.height = 'auto';              // сброс текущей высоты
+                                    ta.style.height = 'auto';                // сброс текущей высоты
                                     ta.style.height = ta.scrollHeight + 'px'; // растягиваем по содержимому
                                 }
                             }}
