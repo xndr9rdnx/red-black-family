@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const messageId = Date.now();
 
     // Формируем текст с юзернеймом и номером
-    const messageText = `#${messageId}\nПользователь: ${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
+    const messageText = `#${messageId}\nПользователь: @${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
 
     try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
