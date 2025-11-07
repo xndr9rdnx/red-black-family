@@ -39,6 +39,10 @@
             height: auto; // сохраняем пропорции
             object-fit: contain; // сохраняем пропорции
             z-index: -1;
+
+            @media (min-width: 512px) {
+                max-width: 500px;
+            }
         }
     }
 }
