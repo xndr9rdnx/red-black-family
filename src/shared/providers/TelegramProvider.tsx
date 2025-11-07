@@ -41,9 +41,29 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
     useEffect(() => {
         const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-            setUser(tg.initDataUnsafe?.user ?? {});
+        if (!tg) return;
+
+        // Вызываем ready чуть позже — Telegram Desktop иногда не успевает подготовить initData
+        setTimeout(() => tg.ready(), 100);
+
+        const tryGetUser = () => {
+            const userData = tg.initDataUnsafe?.user;
+            if (userData && Object.keys(userData).length > 0) {
+                setUser(userData);
+                return true;
+            }
+            return false;
+        };
+
+        // Пробуем сразу
+        if (!tryGetUser()) {
+            // Telegram Desktop часто подгружает user с задержкой
+            const interval = setInterval(() => {
+                if (tryGetUser()) clearInterval(interval);
+            }, 150);
+
+            // Ограничим ожидание до 2 секунд
+            setTimeout(() => clearInterval(interval), 2000);
         }
     }, []);
 
