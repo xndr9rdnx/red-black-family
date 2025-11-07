@@ -40,30 +40,49 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     const [user, setUser] = useState<TelegramUser>({});
 
     useEffect(() => {
+        console.log('[TGProvider] init effect start');
+
         const tg = window.Telegram?.WebApp;
-        if (!tg) return;
+        if (!tg) {
+            console.warn('[TGProvider] Telegram.WebApp not found. Возможно, открыто вне Telegram.');
+            return;
+        }
 
         // Вызываем ready чуть позже — Telegram Desktop иногда не успевает подготовить initData
-        setTimeout(() => tg.ready(), 100);
+        console.log('[TGProvider] Telegram.WebApp найден, вызываем ready() через 100мс...');
+        setTimeout(() => {
+            tg.ready();
+            console.log('[TGProvider] tg.ready() вызван');
+        }, 100);
 
         const tryGetUser = () => {
             const userData = tg.initDataUnsafe?.user;
             if (userData && Object.keys(userData).length > 0) {
+                console.log('[TGProvider] user найден:', userData);
                 setUser(userData);
                 return true;
             }
+            console.log('[TGProvider] user ещё не доступен:', tg.initDataUnsafe);
             return false;
         };
 
         // Пробуем сразу
         if (!tryGetUser()) {
+            console.log('[TGProvider] user не найден сразу, ждём появления...');
             // Telegram Desktop часто подгружает user с задержкой
             const interval = setInterval(() => {
-                if (tryGetUser()) clearInterval(interval);
+                console.log('[TGProvider] повторная попытка получить user...');
+                if (tryGetUser()) {
+                    console.log('[TGProvider] user успешно получен!');
+                    clearInterval(interval);
+                }
             }, 150);
 
             // Ограничим ожидание до 2 секунд
-            setTimeout(() => clearInterval(interval), 2000);
+            setTimeout(() => {
+                console.warn('[TGProvider] истекло время ожидания user (2с), прекращаем попытки');
+                clearInterval(interval);
+            }, 2000);
         }
     }, []);
 
