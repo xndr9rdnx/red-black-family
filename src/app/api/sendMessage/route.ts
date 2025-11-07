@@ -2,8 +2,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 interface TelegramUser {
+    id?: number;
     username?: string;
     first_name?: string;
+    last_name?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -19,8 +21,28 @@ export async function POST(req: NextRequest) {
     // Формируем уникальный ID сообщения
     const messageId = Date.now();
 
-    // Формируем текст с юзернеймом и номером
-    const messageText = `#${messageId}\nПользователь: @${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
+    // Проверяем, пришли ли вообще данные о пользователе
+    const isAuthorized = !!(user && Object.keys(user).length > 0);
+
+    // Формируем текст с описанием каждого поля
+    const userInfo = isAuthorized
+        ? [
+            `ID пользователя: ${user.id ?? "нет ID"}`,
+            `Имя: ${user.first_name ?? "нет имени"}`,
+            `Фамилия: ${user.last_name ?? "нет фамилии"}`,
+            `Username: ${user.username ? `@${user.username}` : "нет username"}`,
+        ].join("\n")
+        : "❌ Пользователь не авторизован в Telegram WebApp (initData отсутствует)";
+
+    // Итоговый текст сообщения
+    const messageText = [
+        `#${messageId}`,
+        `👤 Информация о пользователе:`,
+        userInfo,
+        "",
+        `💬 Сообщение:`,
+        text,
+    ].join("\n");
 
     try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
