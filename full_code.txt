@@ -1,710 +1,832 @@
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\next.config.ts =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\next.config.ts =====
 
-// next.config.ts
-import type { NextConfig } from 'next';
+    // next.config.ts
+    import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {};
+    const nextConfig: NextConfig = {};
 
-export default nextConfig;
+    export default nextConfig;
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\api\sendMessage\route.ts =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\api\sendMessage\route.ts =====
 
-// src/app/api/sendMessage/route.ts
-import { NextRequest, NextResponse } from "next/server";
+    // src/app/api/sendMessage/route.ts
+    import { NextRequest, NextResponse } from "next/server";
 
-interface TelegramUser {
-    username?: string;
-    first_name?: string;
-}
-
-export async function POST(req: NextRequest) {
-    const { text, user }: { text: string; user?: TelegramUser } = await req.json();
-
-    if (!text?.trim()) {
-        return NextResponse.json({ error: "Empty message" }, { status: 400 });
+    interface TelegramUser {
+        username?: string;
+        first_name?: string;
     }
 
-    const token = '7900512023:AAFBSzEOq0l-K63XTEXUVP0UUDewJCT0iZQ';
-    const chatId = '-1003289488234';
+    export async function POST(req: NextRequest) {
+        const { text, user }: { text: string; user?: TelegramUser } = await req.json();
 
-    // Формируем уникальный ID сообщения
-    const messageId = Date.now();
+        if (!text?.trim()) {
+            return NextResponse.json({ error: "Empty message" }, { status: 400 });
+        }
 
-    // Формируем текст с юзернеймом и номером
-    const messageText = `#${messageId}\nПользователь: ${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
+        const token = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.ELEGRAM_CHAT_ID;
 
-    try {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: messageText }),
-        });
+        // Формируем уникальный ID сообщения
+        const messageId = Date.now();
 
-        return NextResponse.json({ ok: true, messageId });
-    } catch (err) {
-        console.error(err);
-        return NextResponse.json({ error: "Failed to send" }, { status: 500 });
-    }
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\error.tsx =====
-
-'use client';
-
-import { useEffect } from 'react';
-import { Button } from '@/shared/ui/button';
-
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
-    useEffect(() => {
-        console.error(error);
-    }, [error]);
-
-    return (
-        <div>
-            <h1>Ошибка</h1>
-            <p>Произошла ошибка при загрузке страницы.</p>
-            <Button onClick={() => reset()} className="" label="Попробовать снова" />
-        </div>
-    );
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\layout.tsx =====
-
-// app/layout.tsx
-import type { Metadata } from 'next';
-import { Lato } from 'next/font/google';
-import clsx from 'clsx';
-import styles from './layout.module.scss';
-import '@/shared/styles/global.scss';
-
-// Подключаем шрифт Lato
-const latoSans = Lato({
-    weight: ['100', '300', '400', '700', '900'],
-    variable: '--font-lato',
-    subsets: ['latin', 'latin-ext'],
-    display: 'swap',
-});
-
-export const metadata: Metadata = {
-    title: {
-        default: 'Red Black Family',
-        template: '%s | RoboMine Сapital',
-    },
-    description: 'Сообщество по игре в мафию',
-    // metadataBase: new URL(FRONTEND_URL || 'Ошибка переменной URL'),
-};
-
-export default function RootLayout({
-    children,
-}: Readonly<{
-    children: React.ReactNode;
-}>) {
-    return (
-        <html lang="ru" suppressHydrationWarning>
-            <head>
-                <script src="https://telegram.org/js/telegram-web-app.js" async></script>
-            </head>
-            <body className={clsx(styles.layout, latoSans.variable)}>
-                <main className={styles.content}>
-                    {children}
-                </main>
-            </body>
-        </html>
-    );
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\loading.tsx =====
-
-// @/app/loading.tsx
-import styles from './Home.module.scss';
-
-export default function Loading() {
-    return <div className={styles.loading}></div>;
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\not-found.tsx =====
-
-// @/app/not-found.tsx
-
-export default function NotFound() {
-    return (
-        <div>
-            <h1 className="not-found__title">404</h1>
-            <p className="not-found__description">Страница не найдена</p>
-        </div>
-    );
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\app\page.tsx =====
-
-// app/page.tsx
-import { MessageForm } from '@/features/message-form/ui/MessageForm';
-import styles from './Home.module.scss';
-import { TelegramProvider } from '@/shared/providers/TelegramProvider';
-
-export default function HomePage() {
-    return (
-        <TelegramProvider>
-            <div className={styles.homePage}>
-                <MessageForm />
-            </div>
-        </TelegramProvider>
-    );
-}
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\features\message-form\ui\MessageForm.tsx =====
-
-'use client';
-
-import { useState } from "react";
-import { useTelegram } from "@/shared/providers/TelegramProvider";
-import styles from "./MessageForm.module.scss";
-
-export function MessageForm() {
-    const [text, setText] = useState("");
-    const [isSent, setIsSent] = useState(false);
-    const { user } = useTelegram();
-
-    const sendMessage = async () => {
-        if (!text.trim()) return;
+        // Формируем текст с юзернеймом и номером
+        const messageText = `#${messageId}\nПользователь: ${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
 
         try {
-            await fetch("/api/sendMessage", {
+            await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text, user }),
+                body: JSON.stringify({ chat_id: chatId, text: messageText }),
             });
 
-            setIsSent(true);
-            setText("");
+            return NextResponse.json({ ok: true, messageId });
         } catch (err) {
-            console.error("Ошибка при отправке:", err);
+            console.error(err);
+            return NextResponse.json({ error: "Failed to send" }, { status: 500 });
         }
-    };
+    }
 
-    const closeMessage = () => setIsSent(false);
 
-    if (isSent) {
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\error.tsx =====
+
+    'use client';
+
+    import { useEffect } from 'react';
+    import { Button } from '@/shared/ui/button';
+
+    export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+        useEffect(() => {
+            console.error(error);
+        }, [error]);
+
         return (
-            <div className={styles.fullscreenMessage}>
-                <div className={styles.messageBox}>
-                    <h1>✅ Ваш вопрос отправлен!</h1>
-                    <button onClick={closeMessage} className={styles.closeButton}>
-                        Закрыть
-                    </button>
-                </div>
+            <div>
+                <h1>Ошибка</h1>
+                <p>Произошла ошибка при загрузке страницы.</p>
+                <Button onClick={() => reset()} className="" label="Попробовать снова" />
             </div>
         );
     }
 
-    return (
-        <div className={styles.messageForm}>
-            <h1 className={styles.title}>Задайте вопрос</h1>
 
-            <textarea
-                className={styles.textarea}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Введите сообщение..."
-                rows={4}
-            />
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\layout.tsx =====
 
-            <button className={styles.button} onClick={sendMessage}>
-                Отправить
-            </button>
-        </div>
-    );
-}
+    // app/layout.tsx
+    import Image from 'next/image';
+    import type { Metadata } from 'next';
+    import { Lato } from 'next/font/google';
+    import clsx from 'clsx';
+    import styles from './layout.module.scss';
+    import '@/shared/styles/global.scss';
 
+    // Подключаем шрифт Lato
+    const latoSans = Lato({
+        weight: ['100', '300', '400', '700', '900'],
+        variable: '--font-lato',
+        subsets: ['latin', 'latin-ext'],
+        display: 'swap',
+    });
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\providers\TelegramProvider.tsx =====
+    export const metadata: Metadata = {
+        title: {
+            default: 'Red Black Family',
+            template: '%s | RoboMine Сapital',
+        },
+        description: 'Сообщество по игре в мафию',
+        // metadataBase: new URL(FRONTEND_URL || 'Ошибка переменной URL'),
+    };
 
-// src/shared/providers/TelegramProvider.tsx
-'use client';
-
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-
-interface TelegramUser {
-    id?: number;
-    first_name?: string;
-    last_name?: string;
-    username?: string;
-}
-
-// Контекст
-interface TelegramContextValue {
-    user: TelegramUser;
-}
-const TelegramContext = createContext<TelegramContextValue>({ user: {} });
-export const useTelegram = () => useContext(TelegramContext);
-
-interface TelegramProviderProps {
-    children: ReactNode;
-}
-
-// Расширенный тип WebApp для доступа к initDataUnsafe
-interface ExtendedWebApp {
-    initDataUnsafe?: { user?: TelegramUser };
-    ready: () => void;
-}
-
-// Расширяем window для провайдера
-declare global {
-    interface Window {
-        Telegram?: {
-            WebApp?: ExtendedWebApp;
-        };
+    export default function RootLayout({
+        children,
+    }: Readonly<{
+        children: React.ReactNode;
+    }>) {
+        return (
+            <html lang="ru" suppressHydrationWarning>
+                <head>
+                    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+                </head>
+                <body className={clsx(styles.layout, latoSans.variable)}>
+                    <main className={styles.content}>
+                        <Image
+                            src="/2.jpg"
+                            alt="Фон"
+                            className={styles.bgImage}
+                            width={1500}
+                            height={1500}
+                            priority
+                        />
+                        {children}
+                    </main>
+                </body>
+            </html>
+        );
     }
-}
 
-export function TelegramProvider({ children }: TelegramProviderProps) {
-    const [user, setUser] = useState<TelegramUser>({});
 
-    useEffect(() => {
-        const tg = window.Telegram?.WebApp;
-        if (tg) {
-            tg.ready();
-            setUser(tg.initDataUnsafe?.user ?? {});
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\loading.tsx =====
+
+    // @/app/loading.tsx
+    import styles from './Home.module.scss';
+
+    export default function Loading() {
+        return <div className={styles.loading}></div>;
+    }
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\not-found.tsx =====
+
+    // @/app/not-found.tsx
+
+    export default function NotFound() {
+        return (
+            <div>
+                <h1 className="not-found__title">404</h1>
+                <p className="not-found__description">Страница не найдена</p>
+            </div>
+        );
+    }
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\app\page.tsx =====
+
+    // app/page.tsx
+    import { MessageForm } from '@/features/message-form/ui/MessageForm';
+    import styles from './Home.module.scss';
+    import { TelegramProvider } from '@/shared/providers/TelegramProvider';
+
+    export default function HomePage() {
+        return (
+            <TelegramProvider>
+                <div className={styles.homePage}>
+                    <MessageForm />
+                </div>
+            </TelegramProvider>
+        );
+    }
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\features\message-form\ui\MessageForm.tsx =====
+
+    'use client';
+
+    import React, { useState, useRef, useCallback, useEffect } from "react";
+    import { useTelegram } from "@/shared/providers/TelegramProvider";
+    import styles from "./MessageForm.module.scss";
+    import { Button } from "@/shared/ui";
+
+    export function MessageForm() {
+        const [text, setText] = useState("");
+        const [isSent, setIsSent] = useState(false);
+        const [error, setError] = useState("");
+        const { user } = useTelegram();
+
+        // Drag logic
+        const [position, setPosition] = useState({ x: 0, y: 0 });
+        const [isDragging, setIsDragging] = useState(false);
+        const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+        const contentRef = useRef<HTMLDivElement>(null);
+        const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+        // Загружаем текст из localStorage при монтировании
+        useEffect(() => {
+            const saved = localStorage.getItem("messageText");
+            if (saved) setText(saved);
+        }, []);
+
+        const startDrag = (x: number, y: number) => {
+            setIsDragging(true);
+            setDragStart({ x: x - position.x, y: y - position.y });
+        };
+
+        const moveDrag = (x: number, y: number) => {
+            if (!isDragging) return;
+            setPosition({ x: x - dragStart.x, y: y - dragStart.y });
+        };
+
+        const endDrag = () => {
+            if (isDragging) {
+                setIsDragging(false);
+                setPosition({ x: 0, y: 0 });
+            }
+        };
+
+        const handleMouseDown = (e: React.MouseEvent) => {
+            const target = e.target as HTMLElement;
+            // запрещаем перетаскивать, если кликнули на textarea или button
+            if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return;
+            startDrag(e.clientX, e.clientY);
+        };
+        const handleMouseMove = useCallback((e: MouseEvent) => moveDrag(e.clientX, e.clientY), [isDragging, dragStart]);
+        const handleMouseUp = useCallback(() => endDrag(), [isDragging]);
+
+        const handleTouchStart = (e: React.TouchEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === "TEXTAREA" || target.tagName === "BUTTON") return;
+            const touch = e.touches[0];
+            startDrag(touch.clientX, touch.clientY);
+        };
+        const handleTouchMove = useCallback((e: TouchEvent) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            moveDrag(touch.clientX, touch.clientY);
+        }, [isDragging, dragStart]);
+        const handleTouchEnd = useCallback(() => endDrag(), [isDragging]);
+
+        useEffect(() => {
+            if (isDragging) {
+                document.addEventListener("mousemove", handleMouseMove);
+                document.addEventListener("mouseup", handleMouseUp);
+                document.addEventListener("touchmove", handleTouchMove, { passive: false });
+                document.addEventListener("touchend", handleTouchEnd);
+                return () => {
+                    document.removeEventListener("mousemove", handleMouseMove);
+                    document.removeEventListener("mouseup", handleMouseUp);
+                    document.removeEventListener("touchmove", handleTouchMove);
+                    document.removeEventListener("touchend", handleTouchEnd);
+                };
+            }
+        }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+
+        const sendMessage = async () => {
+            if (!text.trim()) {
+                setError("Поле не должно быть пустым");
+                return;
+            }
+
+            try {
+                await fetch("/api/sendMessage", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text, user }),
+                });
+                setIsSent(true);
+                setText("");
+                setError("");
+            } catch {
+                setError("Ошибка при отправке сообщения");
+            }
+        };
+
+        return (
+            <div className={styles.messageForm}>
+                <div
+                    className={styles.content}
+                    ref={contentRef}
+                    style={{
+                        transform: `translate(${position.x}px, ${position.y}px)`,
+                        transition: isDragging ? "none" : "transform 1s cubic-bezier(0.25, 0.1, 0.25, 1)",
+                        cursor: isDragging ? "grabbing" : "grab",
+                    }}
+                    onMouseDown={handleMouseDown}
+                    onTouchStart={handleTouchStart}
+                >
+                    <div className={styles.glassFilter}></div>
+                    <div className={styles.glassOverlay}></div>
+                    <div className={styles.glassSpecular}></div>
+
+                    {isSent ? (
+                        <>
+                            <h1 className={styles.title}>Ваш вопрос отправлен!</h1>
+                            <Button onClick={() => setIsSent(false)} className={styles.closeButton}>Закрыть</Button>
+                        </>
+                    ) : (
+                        <>
+                            <h1 className={styles.title}>Задайте вопрос</h1>
+                            <textarea
+                                className={styles.textarea}
+                                value={text}
+                                ref={textareaRef}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setText(value);
+
+                                    // сохраняем в localStorage
+                                    localStorage.setItem("messageText", value);
+
+                                    const ta = textareaRef.current;
+                                    if (ta) {
+                                        ta.style.height = 'auto';                // сброс текущей высоты
+                                        ta.style.height = ta.scrollHeight + 'px'; // растягиваем по содержимому
+                                    }
+                                }}
+                                placeholder="Введите сообщение..."
+                            />
+                            {error && <p className={styles.error}>{error}</p>}
+                            <Button className={styles.button} onClick={sendMessage}>Отправить</Button>
+                        </>
+                    )}
+                </div>
+
+                <svg className={styles.svg}>
+                    <filter id="lg-dist" x="0%" y="0%" width="100%" height="100%">
+                        <feTurbulence
+                            type="fractalNoise"
+                            baseFrequency="0.008 0.008"
+                            numOctaves="2"
+                            seed="92"
+                            result="noise"
+                        />
+                        <feGaussianBlur in="noise" stdDeviation="2" result="blurred" />
+                        <feDisplacementMap
+                            in="SourceGraphic"
+                            in2="blurred"
+                            scale="70"
+                            xChannelSelector="R"
+                            yChannelSelector="G"
+                        />
+                    </filter>
+                </svg>
+            </div>
+        );
+    }
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\providers\TelegramProvider.tsx =====
+
+    // src/shared/providers/TelegramProvider.tsx
+    'use client';
+
+    import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+    interface TelegramUser {
+        id?: number;
+        first_name?: string;
+        last_name?: string;
+        username?: string;
+    }
+
+    // Контекст
+    interface TelegramContextValue {
+        user: TelegramUser;
+    }
+    const TelegramContext = createContext<TelegramContextValue>({ user: {} });
+    export const useTelegram = () => useContext(TelegramContext);
+
+    interface TelegramProviderProps {
+        children: ReactNode;
+    }
+
+    // Расширенный тип WebApp для доступа к initDataUnsafe
+    interface ExtendedWebApp {
+        initDataUnsafe?: { user?: TelegramUser };
+        ready: () => void;
+    }
+
+    // Расширяем window для провайдера
+    declare global {
+        interface Window {
+            Telegram?: {
+                WebApp?: ExtendedWebApp;
+            };
         }
-    }, []);
+    }
 
-    return (
-        <TelegramContext.Provider value={{ user }}>
-            {children}
-        </TelegramContext.Provider>
-    );
-}
+    export function TelegramProvider({ children }: TelegramProviderProps) {
+        const [user, setUser] = useState<TelegramUser>({});
 
+        useEffect(() => {
+            const tg = window.Telegram?.WebApp;
+            if (tg) {
+                tg.ready();
+                setUser(tg.initDataUnsafe?.user ?? {});
+            }
+        }, []);
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\button\Button.tsx =====
-
-import React from 'react';
-import clsx from 'clsx';
-import styles from './Button.module.scss';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    label?: string;
-    children?: React.ReactNode;
-    variant?: 'primary' | 'secondary' | 'switch' | 'info' | 'outline';
-    className?: string;
-}
-
-export const Button = ({
-    label,
-    onClick,
-    disabled = false,
-    variant = 'primary',
-    children,
-    className,
-    ...props
-}: ButtonProps) => {
-    const variantClass = styles[`button${variant[0].toUpperCase() + variant.slice(1)}`];
-
-    return (
-        <button
-            className={clsx(styles.button, variantClass, className, {
-                [styles.disabled]: disabled,
-            })}
-            onClick={onClick}
-            disabled={disabled}
-            {...props}
-        >
-            {children}
-            {label}
-        </button>
-    );
-};
+        return (
+            <TelegramContext.Provider value={{ user }}>
+                {children}
+            </TelegramContext.Provider>
+        );
+    }
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\button\index.ts =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\button\Button.tsx =====
 
-export { Button } from "./Button";
+    import React from 'react';
+    import clsx from 'clsx';
+    import styles from './Button.module.scss';
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\index.ts =====
+    interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+        label?: string;
+        children?: React.ReactNode;
+        variant?: 'primary' | 'secondary' | 'switch' | 'info' | 'outline';
+        className?: string;
+    }
 
-export { Button } from './button';
-export { Modal } from './modal';
-export { Input } from './input';
-export { SegmentControls } from './segment-control';
+    export const Button = ({
+        label,
+        onClick,
+        disabled = false,
+        variant = 'primary',
+        children,
+        className,
+        ...props
+    }: ButtonProps) => {
+        const variantClass = styles[`button${variant[0].toUpperCase() + variant.slice(1)}`];
+
+        return (
+            <button
+                className={clsx(styles.button, variantClass, className, {
+                    [styles.disabled]: disabled,
+                })}
+                onClick={onClick}
+                disabled={disabled}
+                {...props}
+            >
+                {children}
+                {label}
+            </button>
+        );
+    };
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\input\Input.tsx =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\button\index.ts =====
 
-// @/shared/ui/input/Input.tsx
-import clsx from 'clsx';
-import styles from './Input.module.scss';
+    export { Button } from "./Button";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    error?: string;
-    variant?: 'default' | 'balance';
-    currency?: string;
-}
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\index.ts =====
 
-export const Input = ({
-    type = 'text',
-    placeholder,
-    value,
-    onChange,
-    error,
-    disabled,
-    className,
-    variant = 'default',
-    currency,
-    ...props
-}: InputProps) => {
-    if (variant === 'balance') {
+    export { Button } from './button';
+    export { Modal } from './modal';
+    export { Input } from './input';
+    export { SegmentControls } from './segment-control';
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\input\Input.tsx =====
+
+    // @/shared/ui/input/Input.tsx
+    import clsx from 'clsx';
+    import styles from './Input.module.scss';
+
+    interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+        error?: string;
+        variant?: 'default' | 'balance';
+        currency?: string;
+    }
+
+    export const Input = ({
+        type = 'text',
+        placeholder,
+        value,
+        onChange,
+        error,
+        disabled,
+        className,
+        variant = 'default',
+        currency,
+        ...props
+    }: InputProps) => {
+        if (variant === 'balance') {
+            return (
+                <div
+                    className={clsx(
+                        styles.inputWrapper,
+                        styles.balanceWrapper,
+                        error && styles.error,
+                        disabled && styles.disabled
+                    )}
+                >
+                    <input
+                        type={type}
+                        className={clsx(styles.input, styles.balanceInput, className)}
+                        placeholder={placeholder}
+                        value={value}
+                        onChange={onChange}
+                        disabled={disabled}
+                        {...props}
+                    />
+                    {currency && <span className={styles.currency}>{currency}</span>}
+                    {error && <span className={styles.errorMessage}>{error}</span>}
+                </div>
+            );
+        }
+
         return (
             <div
                 className={clsx(
                     styles.inputWrapper,
-                    styles.balanceWrapper,
                     error && styles.error,
-                    disabled && styles.disabled
+                    disabled && styles.disabled,
+                    className
                 )}
             >
                 <input
                     type={type}
-                    className={clsx(styles.input, styles.balanceInput, className)}
+                    className={clsx(styles.input, error && styles.errorInput)}
                     placeholder={placeholder}
                     value={value}
                     onChange={onChange}
                     disabled={disabled}
                     {...props}
                 />
-                {currency && <span className={styles.currency}>{currency}</span>}
                 {error && <span className={styles.errorMessage}>{error}</span>}
             </div>
         );
+    };
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\input\index.ts =====
+
+    export { Input } from './Input';
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\modal\Modal.tsx =====
+
+    'use client';
+
+    // @/shared/ui/modal/Modal.tsx
+    import { useEffect, useRef, useState } from 'react';
+    import styles from './Modal.module.scss';
+
+    interface ModalProps {
+        isOpen: boolean;
+        onClose: () => void;
+        children: React.ReactNode;
     }
 
-    return (
-        <div
-            className={clsx(
-                styles.inputWrapper,
-                error && styles.error,
-                disabled && styles.disabled,
-                className
-            )}
-        >
-            <input
-                type={type}
-                className={clsx(styles.input, error && styles.errorInput)}
-                placeholder={placeholder}
-                value={value}
-                onChange={onChange}
-                disabled={disabled}
-                {...props}
-            />
-            {error && <span className={styles.errorMessage}>{error}</span>}
-        </div>
-    );
-};
+    export const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+        const [isClosing, setIsClosing] = useState(false);
+        const backdropRef = useRef<HTMLDivElement>(null);
 
+        // Сбрасываем состояние закрытия при открытии модального окна
+        useEffect(() => {
+            if (isOpen) {
+                setIsClosing(false);
+            }
+        }, [isOpen]);
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\input\index.ts =====
+        // Закрываем модалку при нажатии Escape
+        useEffect(() => {
+            const handleEscape = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                    handleClose();
+                }
+            };
 
-export { Input } from './Input';
+            if (isOpen) {
+                document.addEventListener('keydown', handleEscape);
+                document.body.style.overflow = 'hidden';
+            }
 
+            return () => {
+                document.removeEventListener('keydown', handleEscape);
+                document.body.style.overflow = 'unset';
+            };
+        }, [isOpen]);
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\modal\Modal.tsx =====
+        const handleClose = () => {
+            setIsClosing(true);
+        };
 
-'use client';
+        const handleAnimationEnd = () => {
+            if (isClosing) {
+                onClose(); // Вызываем onClose только после завершения анимации
+                setIsClosing(false);
+            }
+        };
 
-// @/shared/ui/modal/Modal.tsx
-import { useEffect, useRef, useState } from 'react';
-import styles from './Modal.module.scss';
-
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    children: React.ReactNode;
-}
-
-export const Modal = ({ isOpen, onClose, children }: ModalProps) => {
-    const [isClosing, setIsClosing] = useState(false);
-    const backdropRef = useRef<HTMLDivElement>(null);
-
-    // Сбрасываем состояние закрытия при открытии модального окна
-    useEffect(() => {
-        if (isOpen) {
-            setIsClosing(false);
-        }
-    }, [isOpen]);
-
-    // Закрываем модалку при нажатии Escape
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
+        const handleBackdropClick = (e: React.MouseEvent) => {
+            if (e.target === e.currentTarget) {
                 handleClose();
             }
         };
 
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden';
-        }
+        // Экспонируем функцию handleClose для внешнего использования
+        useEffect(() => {
+            const handleExternalClose = () => {
+                handleClose();
+            };
 
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen]);
+            // Слушаем кастомное событие для программного закрытия с анимацией
+            window.addEventListener('closeModalWithAnimation', handleExternalClose);
 
-    const handleClose = () => {
-        setIsClosing(true);
-    };
+            return () => {
+                window.removeEventListener('closeModalWithAnimation', handleExternalClose);
+            };
+        }, []);
 
-    const handleAnimationEnd = () => {
-        if (isClosing) {
-            onClose(); // Вызываем onClose только после завершения анимации
-            setIsClosing(false);
-        }
-    };
+        if (!isOpen && !isClosing) return null;
 
-    const handleBackdropClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-            handleClose();
-        }
-    };
-
-    // Экспонируем функцию handleClose для внешнего использования
-    useEffect(() => {
-        const handleExternalClose = () => {
-            handleClose();
-        };
-
-        // Слушаем кастомное событие для программного закрытия с анимацией
-        window.addEventListener('closeModalWithAnimation', handleExternalClose);
-
-        return () => {
-            window.removeEventListener('closeModalWithAnimation', handleExternalClose);
-        };
-    }, []);
-
-    if (!isOpen && !isClosing) return null;
-
-    return (
-        <div
-            ref={backdropRef}
-            className={`${styles.modalBackdrop} ${isClosing ? styles.closing : ''}`}
-            onClick={handleBackdropClick}
-            onAnimationEnd={handleAnimationEnd}
-        >
-            <button className={styles.closeButton} onClick={handleClose} aria-label="Закрыть">
-                ×
-            </button>
+        return (
             <div
-                className={`${styles.modalContent} ${isClosing ? styles.closing : ''}`}
+                ref={backdropRef}
+                className={`${styles.modalBackdrop} ${isClosing ? styles.closing : ''}`}
+                onClick={handleBackdropClick}
                 onAnimationEnd={handleAnimationEnd}
             >
-                {children}
+                <button className={styles.closeButton} onClick={handleClose} aria-label="Закрыть">
+                    ×
+                </button>
+                <div
+                    className={`${styles.modalContent} ${isClosing ? styles.closing : ''}`}
+                    onAnimationEnd={handleAnimationEnd}
+                >
+                    {children}
+                </div>
             </div>
-        </div>
-    );
-};
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\modal\index.ts =====
-
-export { Modal } from './Modal';
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\segment-control\SegmentControls.tsx =====
-
-'use client';
-
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import clsx from 'clsx';
-import styles from './SegmentControl.module.scss';
-
-type Option = { label: React.ReactNode; value: string; disabled?: boolean };
-
-interface Props {
-    value?: string;
-    defaultValue?: string;
-    options: Option[];
-    onValueChange?: (val: string) => void;
-    className?: string;
-    variant?: 'filled' | 'ghost';
-    disabled?: boolean;
-}
-
-export function SegmentControls({
-    value,
-    defaultValue,
-    options,
-    onValueChange,
-    className,
-    variant = 'filled',
-    disabled = false,
-}: Props) {
-    const isControlled = value !== undefined;
-    const [inner, setInner] = useState<string | undefined>(defaultValue ?? options[0]?.value);
-    const current = isControlled ? value! : inner!;
-    const setCurrent = useCallback(
-        (v: string) => {
-            if (!isControlled) setInner(v);
-            onValueChange?.(v);
-        },
-        [isControlled, onValueChange]
-    );
-
-    const rootRef = useRef<HTMLDivElement | null>(null);
-    const thumbRef = useRef<HTMLDivElement | null>(null);
-
-    const updateThumb = useCallback(() => {
-        const root = rootRef.current;
-        const thumb = thumbRef.current;
-        if (!root || !thumb) return;
-        const active = root.querySelector<HTMLButtonElement>(
-            `button[data-value="${CSS.escape(current)}"]`
         );
-        if (!active) return;
-
-        const rootRect = root.getBoundingClientRect();
-        const activeRect = active.getBoundingClientRect();
-        const x = activeRect.left - rootRect.left + root.scrollLeft;
-        const w = activeRect.width;
-
-        thumb.style.transform = `translateX(${x}px)`;
-        thumb.style.width = `${w}px`;
-    }, [current]);
-
-    useLayoutEffect(updateThumb, [updateThumb]);
-    useEffect(() => {
-        const ro = new ResizeObserver(updateThumb);
-        if (rootRef.current) ro.observe(rootRef.current);
-        return () => ro.disconnect();
-    }, [updateThumb]);
-
-    return (
-        <div
-            ref={rootRef}
-            className={clsx(
-                styles.segmentControls,
-                styles[variant],
-                disabled && styles.disabled,
-                className
-            )}
-            data-disabled={disabled || undefined}
-            data-value={current}
-        >
-            <div ref={thumbRef} aria-hidden className={styles.thumb} />
-
-            {options.map((opt) => {
-                const isActive = current === opt.value;
-                return (
-                    <button
-                        key={opt.value}
-                        data-active={isActive || undefined}
-                        data-disabled={opt.disabled || disabled || undefined}
-                        className={clsx(styles.segment)}
-                        type="button"
-                        disabled={disabled || opt.disabled}
-                        onClick={() => !disabled && !opt.disabled && setCurrent(opt.value)}
-                        data-value={opt.value}
-                    >
-                        {opt.label}
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
+    };
 
 
-===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\segment-control\index.ts =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\modal\index.ts =====
 
-export { SegmentControls } from './SegmentControls';
-
-
-===== C:\Users\alexa\Documents\projects\red-black-family\src\widgets\header\ui\Header.tsx =====
-
-import styles from './Header.module.scss';
-
-export default function Header() {
-    return (
-        <header className={styles.header}>
-        </header>
-    );
-}
+    export { Modal } from './Modal';
 
 
-===== СТРУКТУРА ПРОЕКТА =====
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\segment-control\SegmentControls.tsx =====
 
-.
-├── .env
-├── .eslintrc.js
-├── .prettierrc
-├── collect-code.js
-├── eslint.config.mjs
-├── full_code.txt
-├── global.d.ts
-├── next-env.d.ts
-├── next.config.ts
-├── package-lock.json
-├── package.json
-├── public
-    └── photo_2025-11-06_15-39-47.jpg
-├── src
-    ├── app
-    │   ├── api
-    │   │   └── sendMessage
-    │   │   │   └── route.ts
-    │   ├── error.tsx
-    │   ├── Home.module.scss
-    │   ├── icon.svg
-    │   ├── layout.module.scss
-    │   ├── layout.tsx
-    │   ├── loading.tsx
-    │   ├── not-found.tsx
-    │   └── page.tsx
-    ├── entities
-    ├── features
-    │   └── message-form
-    │   │   └── ui
-    │   │       ├── MessageForm.module.scss
-    │   │       └── MessageForm.tsx
-    ├── shared
-    │   ├── assets
-    │   │   └── icons
-    │   ├── providers
-    │   │   └── TelegramProvider.tsx
-    │   ├── styles
-    │   │   ├── global.scss
-    │   │   ├── _animations.scss
-    │   │   ├── _mixins.scss
-    │   │   └── _variables.scss
-    │   └── ui
-    │   │   ├── button
-    │   │       ├── Button.module.scss
-    │   │       ├── Button.tsx
-    │   │       └── index.ts
-    │   │   ├── index.ts
-    │   │   ├── input
-    │   │       ├── index.ts
-    │   │       ├── Input.module.scss
-    │   │       └── Input.tsx
-    │   │   ├── modal
-    │   │       ├── index.ts
-    │   │       ├── Modal.module.scss
-    │   │       └── Modal.tsx
-    │   │   └── segment-control
-    │   │       ├── index.ts
-    │   │       ├── SegmentControl.module.scss
-    │   │       └── SegmentControls.tsx
-    └── widgets
-    │   └── header
-    │       └── ui
-    │           ├── Header.module.scss
-    │           └── Header.tsx
-└── tsconfig.json
+    'use client';
+
+    import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+    import clsx from 'clsx';
+    import styles from './SegmentControl.module.scss';
+
+    type Option = { label: React.ReactNode; value: string; disabled?: boolean };
+
+    interface Props {
+        value?: string;
+        defaultValue?: string;
+        options: Option[];
+        onValueChange?: (val: string) => void;
+        className?: string;
+        variant?: 'filled' | 'ghost';
+        disabled?: boolean;
+    }
+
+    export function SegmentControls({
+        value,
+        defaultValue,
+        options,
+        onValueChange,
+        className,
+        variant = 'filled',
+        disabled = false,
+    }: Props) {
+        const isControlled = value !== undefined;
+        const [inner, setInner] = useState<string | undefined>(defaultValue ?? options[0]?.value);
+        const current = isControlled ? value! : inner!;
+        const setCurrent = useCallback(
+            (v: string) => {
+                if (!isControlled) setInner(v);
+                onValueChange?.(v);
+            },
+            [isControlled, onValueChange]
+        );
+
+        const rootRef = useRef<HTMLDivElement | null>(null);
+        const thumbRef = useRef<HTMLDivElement | null>(null);
+
+        const updateThumb = useCallback(() => {
+            const root = rootRef.current;
+            const thumb = thumbRef.current;
+            if (!root || !thumb) return;
+            const active = root.querySelector<HTMLButtonElement>(
+                `button[data-value="${CSS.escape(current)}"]`
+            );
+            if (!active) return;
+
+            const rootRect = root.getBoundingClientRect();
+            const activeRect = active.getBoundingClientRect();
+            const x = activeRect.left - rootRect.left + root.scrollLeft;
+            const w = activeRect.width;
+
+            thumb.style.transform = `translateX(${x}px)`;
+            thumb.style.width = `${w}px`;
+        }, [current]);
+
+        useLayoutEffect(updateThumb, [updateThumb]);
+        useEffect(() => {
+            const ro = new ResizeObserver(updateThumb);
+            if (rootRef.current) ro.observe(rootRef.current);
+            return () => ro.disconnect();
+        }, [updateThumb]);
+
+        return (
+            <div
+                ref={rootRef}
+                className={clsx(
+                    styles.segmentControls,
+                    styles[variant],
+                    disabled && styles.disabled,
+                    className
+                )}
+                data-disabled={disabled || undefined}
+                data-value={current}
+            >
+                <div ref={thumbRef} aria-hidden className={styles.thumb} />
+
+                {options.map((opt) => {
+                    const isActive = current === opt.value;
+                    return (
+                        <button
+                            key={opt.value}
+                            data-active={isActive || undefined}
+                            data-disabled={opt.disabled || disabled || undefined}
+                            className={clsx(styles.segment)}
+                            type="button"
+                            disabled={disabled || opt.disabled}
+                            onClick={() => !disabled && !opt.disabled && setCurrent(opt.value)}
+                            data-value={opt.value}
+                        >
+                            {opt.label}
+                        </button>
+                    );
+                })}
+            </div>
+        );
+    }
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\ui\segment-control\index.ts =====
+
+    export { SegmentControls } from './SegmentControls';
+
+
+    ===== C:\Users\alexa\Documents\projects\red-black-family\src\widgets\header\ui\Header.tsx =====
+
+    import styles from './Header.module.scss';
+
+    export default function Header() {
+        return (
+            <header className={styles.header}>
+            </header>
+        );
+    }
+
+
+    ===== СТРУКТУРА ПРОЕКТА =====
+
+    .
+    ├── .env
+    ├── .eslintrc.js
+    ├── .prettierrc
+    ├── collect-code.js
+    ├── eslint.config.mjs
+    ├── full_code.txt
+    ├── global.d.ts
+    ├── next-env.d.ts
+    ├── next.config.ts
+    ├── package-lock.json
+    ├── package.json
+    ├── public
+        ├── 1.jpg
+        └── 2.jpg
+    ├── src
+        ├── app
+        │   ├── api
+        │   │   └── sendMessage
+        │   │   │   └── route.ts
+        │   ├── error.tsx
+        │   ├── Home.module.scss
+        │   ├── icon.svg
+        │   ├── layout.module.scss
+        │   ├── layout.tsx
+        │   ├── loading.tsx
+        │   ├── not-found.tsx
+        │   └── page.tsx
+        ├── entities
+        ├── features
+        │   └── message-form
+        │   │   └── ui
+        │   │       ├── MessageForm.module.scss
+        │   │       └── MessageForm.tsx
+        ├── shared
+        │   ├── assets
+        │   │   └── icons
+        │   ├── providers
+        │   │   └── TelegramProvider.tsx
+        │   ├── styles
+        │   │   ├── global.scss
+        │   │   ├── _animations.scss
+        │   │   ├── _mixins.scss
+        │   │   └── _variables.scss
+        │   └── ui
+        │   │   ├── button
+        │   │       ├── Button.module.scss
+        │   │       ├── Button.tsx
+        │   │       └── index.ts
+        │   │   ├── index.ts
+        │   │   ├── input
+        │   │       ├── index.ts
+        │   │       ├── Input.module.scss
+        │   │       └── Input.tsx
+        │   │   ├── modal
+        │   │       ├── index.ts
+        │   │       ├── Modal.module.scss
+        │   │       └── Modal.tsx
+        │   │   └── segment-control
+        │   │       ├── index.ts
+        │   │       ├── SegmentControl.module.scss
+        │   │       └── SegmentControls.tsx
+        └── widgets
+        │   └── header
+        │       └── ui
+        │           ├── Header.module.scss
+        │           └── Header.tsx
+    └── tsconfig.json

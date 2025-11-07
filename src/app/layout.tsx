@@ -39,8 +39,8 @@ export default function RootLayout({
                         src="/2.jpg"
                         alt="Фон"
                         className={styles.bgImage}
-                        width={200}
-                        height={100}
+                        width={1280}
+                        height={1280}
                         priority
                     />
                     {children}

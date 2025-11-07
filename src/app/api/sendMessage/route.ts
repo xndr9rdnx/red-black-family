@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     }
 
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.ELEGRAM_CHAT_ID;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
 
     // Формируем уникальный ID сообщения
     const messageId = Date.now();
