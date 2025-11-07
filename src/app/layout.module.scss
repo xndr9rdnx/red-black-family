@@ -9,6 +9,12 @@
     display: grid;
     justify-content: center;
     align-content: center;
+    background-image: url('/2.jpg');
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: cover;
+    background-color: #000;
+    min-height: 100vh;
 
     .content {
         position: relative;

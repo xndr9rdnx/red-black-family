@@ -15,8 +15,13 @@ export default nextConfig;
 // src/app/api/sendMessage/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
+interface TelegramUser {
+    username?: string;
+    first_name?: string;
+}
+
 export async function POST(req: NextRequest) {
-    const { text } = await req.json();
+    const { text, user }: { text: string; user?: TelegramUser } = await req.json();
 
     if (!text?.trim()) {
         return NextResponse.json({ error: "Empty message" }, { status: 400 });
@@ -25,11 +30,11 @@ export async function POST(req: NextRequest) {
     const token = '7900512023:AAFBSzEOq0l-K63XTEXUVP0UUDewJCT0iZQ';
     const chatId = '-1003289488234';
 
-    // Формируем уникальный ID сообщения (можно заменить на автоинкремент из БД)
+    // Формируем уникальный ID сообщения
     const messageId = Date.now();
 
     // Формируем текст с юзернеймом и номером
-    const messageText = `#${messageId}\nПользователь: ${user.username || user.first_name || 'Anonymous'}\nВопрос: ${text}`;
+    const messageText = `#${messageId}\nПользователь: ${user?.username || user?.first_name || 'Anonymous'}\nВопрос: ${text}`;
 
     try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -143,38 +148,40 @@ export default function NotFound() {
 // app/page.tsx
 import { MessageForm } from '@/features/message-form/ui/MessageForm';
 import styles from './Home.module.scss';
+import { TelegramProvider } from '@/shared/providers/TelegramProvider';
 
 export default function HomePage() {
     return (
-        <div className={styles.homePage}>
-            <MessageForm />
-        </div>
+        <TelegramProvider>
+            <div className={styles.homePage}>
+                <MessageForm />
+            </div>
+        </TelegramProvider>
     );
 }
 
 
 ===== C:\Users\alexa\Documents\projects\red-black-family\src\features\message-form\ui\MessageForm.tsx =====
 
-'use client'
+'use client';
 
 import { useState } from "react";
-import { TelegramProvider } from "@/shared/providers/TelegramProvider";
+import { useTelegram } from "@/shared/providers/TelegramProvider";
 import styles from "./MessageForm.module.scss";
-import { Button } from "@/shared/ui";
 
 export function MessageForm() {
     const [text, setText] = useState("");
     const [isSent, setIsSent] = useState(false);
+    const { user } = useTelegram();
 
     const sendMessage = async () => {
         if (!text.trim()) return;
 
-        const tgUser = window.Telegram?.WebApp?.initDataUnsafe.user || {};
-
         try {
             await fetch("/api/sendMessage", {
                 method: "POST",
-                body: JSON.stringify({ text, user: tgUser }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text, user }),
             });
 
             setIsSent(true);
@@ -184,9 +191,7 @@ export function MessageForm() {
         }
     };
 
-    const closeMessage = () => {
-        setIsSent(false);
-    };
+    const closeMessage = () => setIsSent(false);
 
     if (isSent) {
         return (
@@ -202,44 +207,81 @@ export function MessageForm() {
     }
 
     return (
-        <TelegramProvider>
-            <div className={styles.messageForm}>
-                <h1 className={styles.title}>Задайте вопрос</h1>
+        <div className={styles.messageForm}>
+            <h1 className={styles.title}>Задайте вопрос</h1>
 
-                <textarea
-                    className={styles.textarea}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Введите сообщение..."
-                    rows={4}
-                />
+            <textarea
+                className={styles.textarea}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Введите сообщение..."
+                rows={4}
+            />
 
-                <button className={styles.button} onClick={sendMessage}>
-                    Отправить
-                </button>
-            </div>
-        </TelegramProvider>
+            <button className={styles.button} onClick={sendMessage}>
+                Отправить
+            </button>
+        </div>
     );
 }
 
 
 ===== C:\Users\alexa\Documents\projects\red-black-family\src\shared\providers\TelegramProvider.tsx =====
 
-"use client";
+// src/shared/providers/TelegramProvider.tsx
+'use client';
 
-import { useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+interface TelegramUser {
+    id?: number;
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+}
+
+// Контекст
+interface TelegramContextValue {
+    user: TelegramUser;
+}
+const TelegramContext = createContext<TelegramContextValue>({ user: {} });
+export const useTelegram = () => useContext(TelegramContext);
 
 interface TelegramProviderProps {
     children: ReactNode;
 }
 
+// Расширенный тип WebApp для доступа к initDataUnsafe
+interface ExtendedWebApp {
+    initDataUnsafe?: { user?: TelegramUser };
+    ready: () => void;
+}
+
+// Расширяем window для провайдера
+declare global {
+    interface Window {
+        Telegram?: {
+            WebApp?: ExtendedWebApp;
+        };
+    }
+}
+
 export function TelegramProvider({ children }: TelegramProviderProps) {
+    const [user, setUser] = useState<TelegramUser>({});
+
     useEffect(() => {
         const tg = window.Telegram?.WebApp;
-        if (tg) tg.ready();
+        if (tg) {
+            tg.ready();
+            setUser(tg.initDataUnsafe?.user ?? {});
+        }
     }, []);
 
-    return <>{children}</>;
+    return (
+        <TelegramContext.Provider value={{ user }}>
+            {children}
+        </TelegramContext.Provider>
+    );
 }
 
 
